@@ -1,19 +1,10 @@
 const QBRadio = {}
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Controls elements
-    const submitEl = document.querySelector('#submit')
-    const disconnectEl = document.querySelector('#disconnect')
-    const volumeUpEl = document.querySelector('#volumeUp')
-    const volumeDownEl = document.querySelector('#volumeDown')
-    const decreaseRadioChannelEl = document.querySelector('#decreaseradiochannel')
-    const increaseRadioChannelEl = document.querySelector('#increaseradiochannel')
-    const poweredOffEl = document.querySelector('#poweredOff')
-    const channelEl = document.querySelector('#channel')
-
     // Display elements
     const containerEl = document.querySelector('.container')
     const radioContainerEl = document.querySelector('.radio-container')
+    const channelEl = document.querySelector('#channel-input')
 
     // Custom functions
     QBRadio.SlideUp = () => {
@@ -42,163 +33,159 @@ document.addEventListener('DOMContentLoaded', () => {
             radioContainerEl.style.bottom = "-110vh"
         })
     }
-    QBRadio.JoinRadio = () => {
-        const curChannel = parseInt(channelEl.value)
+    QBRadio.JoinChannel = async() => {
+        const channel = parseInt(channelEl.value)
 
-        if (!isNaN(curChannel)) {
-            fetch('https://qb-radio/joinRadio', {
-                method: "POST",
-                body: JSON.stringify({
-                    channel: curChannel
-                }),
-            }).then(resp => resp.json()).then(resp => {
-                const newChannel = parseInt(resp.channel)
+        if (!isNaN(channel)) {
+            try {
+                const { data } = await axios.post('https://qb-radio/joinRadio', {
+                    channel
+                })
+                const newChannel = parseInt(data.channel)
+
                 channelEl.value = newChannel
                 document.activeElement.blur()
                 console.log('You join the channel:', newChannel)
-            }).catch(err => console.error(err));
-        }
-    }
-    QBRadio.LeaveRadio = () => {
-        const curChannel = parseInt(channelEl.value)
-        if (!isNaN(curChannel)) {
-            fetch('https://qb-radio/leaveRadio', {
-                method: "POST",
-                body: {}
-            }).then(resp => resp.json()).then(resp => {
-                if (resp.status === 'success') {
-                    channelEl.value = ''
-                    console.info('You leave the radio channel')
-                }
-            }).catch(err => console.error(err))
-        }
-    }
-    QBRadio.VolumeUp = () => {
-        const curChannel = parseInt(channelEl.value)
-        if (!isNaN(curChannel)) {
-            fetch('https://qb-radio/volumeUp', {
-                method: "POST",
-                body: JSON.stringify({
-                    channel: curChannel
-                }).then(resp => resp.json()).then(resp => {
-                    if (resp.status === 'success') {
-                        console.info('Radio volume increased')
-                    }
-                }).catch(err => console.error(err))
-            });
-        }
-    }
-    QBRadio.volumeDown = () => {
-        const curChannel = parseInt(channelEl.value)
-        if (!isNaN(curChannel)) {
-            console.info('Decrease radio volume')
-            fetch('https://qb-radio/volumeDown', {
-                body: JSON.stringify({
-                    channel: curChannel
-                })
-            }).then(resp => resp.json()).then(resp => {
-                if (resp.status === 'success') {
-                    console.info('Radio volume increased')
-                }
-            }).catch(err => console.error(err));
-        }
-    }
-    QBRadio.IncreaseRadioChannel = () => {
-        const curChannel = parseInt(channelEl.value)
-        if (!isNaN(curChannel)) {
-            fetch('https://qb-radio/increaseradiochannel', {
-                method: "POST",
-                body: JSON.stringify({
-                    channel: curChannel
-                }).then(resp => resp.json()).then(resp => {
-                    if (isNaN(parseInt(resp.channel))) {
-                        channelEl.value = parseInt(resp.channel)
-                        console.log("You join the channel:", resp.channel)
-                    }
-                }).catch(err => console.error(err))
-            });
-        } else {
-            console.warn('Please join a radio frequency first')
-        }
-    }
-    QBRadio.DecreaseRadioChannel = () => {
-        const curChannel = parseInt(channelEl.value)
-        if (!isNaN(curChannel)) {
-            fetch('https://qb-radio/decreaseradiochannel', {
-                method: "POST",
-                body: JSON.stringify({
-                    channel: curChannel
-                }).then(resp => resp.json()).then(resp => {
-                    if (isNaN(parseInt(resp.channel))) {
-                        channelEl.value = parseInt(resp.channel)
-                        console.log("You join the channel:", resp.channel)
-                    }
-                }).catch(err => console.error(err))
-            });
-        } else {
-            console.warn('Please join a radio frequency first')
-        }
-    }
-    QBRadio.PoweredOff = async() => {
-        channelEl.value = ''
-        await fetch('https://qb-radio/poweredOff', {
-            method: "POST",
-            body: JSON.stringify({
-                channel: channelEl.value
-            })
-        }).then(resp => resp.json()).then(resp => {
-            if (resp.status === 'success') {
-                console.info('Radio volume increased')
+            } catch (err) {
+                console.error(`Error: ${err.message}`)
             }
-        }).catch(err => console.error(err));
+        } else {
+            console.error('You must provide a valid channel')
+        }
+    }
+    QBRadio.LeaveChannel = async() => {
+        const channel = parseInt(channelEl.value)
+        if (!isNaN(channel)) {
+            try {
+                const { data } = await axios.post('https://qb-radio/leaveRadio')
+
+                if (data.status === 'success') {
+                    channelEl.value = ''
+                }
+            } catch (err) {
+                console.error(`Error: ${err.message}`)
+            }
+        } else {
+            console.warn('Please join a radio channel before trying to change radio volume')
+        }
+    }
+    QBRadio.VolumeUp = async() => {
+        const channel = parseInt(channelEl.value)
+        if (!isNaN(channel)) {
+            try {
+                const { data } = await axios.post('https://qb-radio/volumeUp', {
+                    channel
+                })
+
+                if (data.status === 'success') {
+                    console.info('Successfully increase of radio volume')
+                }
+            } catch (err) {
+                console.error(`Error: ${err.message}`)
+            }
+        } else {
+            console.warn('Please join a radio channel before trying to change radio volume')
+        }
+    }
+    QBRadio.VolumeDown = async() => {
+        const channel = parseInt(channelEl.value)
+        if (!isNaN(channel)) {
+            try {
+                const { data } = await axios.post('https://qb-radio/volumeDown', {
+                    channel
+                })
+
+                if (data.status === 'success') {
+                    console.info('Successfully decrease of radio volume')
+                }
+            } catch (err) {
+                console.error(`Error: ${err.message}`)
+            }
+        } else {
+            console.warn('Please join a radio channel before trying to change radio volume')
+        }
+    }
+    QBRadio.ChannelUp = async() => {
+        const channel = parseInt(channelEl.value)
+        if (!isNaN(channel)) {
+            try {
+                const { data } = await axios.post('https://qb-radio/increaseradiochannel', {
+                    channel
+                })
+                const newChannel = parseInt(data.channel)
+                if (!isNaN(newChannel)) {
+                    channelEl.value = newChannel
+                    console.log("You join the channel:", newChannel)
+                }
+            } catch (err) {
+                console.error(`Error: ${err.message}`)
+            }
+        } else {
+            console.warn('Please join a radio channel before trying to change channel')
+        }
+    }
+    QBRadio.ChannelDown = async() => {
+        const channel = parseInt(channelEl.value)
+        if (!isNaN(channel)) {
+            try {
+                const { data } = await axios.post('https://qb-radio/decreaseradiochannel', {
+                    channel
+                })
+                const newChannel = parseInt(data.channel)
+                if (!isNaN(newChannel)) {
+                    channelEl.value = newChannel
+                    console.log("You join the channel:", newChannel)
+                }
+            } catch (err) {
+                console.error(`Error: ${err.message}`)
+            }
+        } else {
+            console.warn('Please join a radio channel before trying to change channel')
+        }
+    }
+    QBRadio.PowerOff = async() => {
+        try {
+            await axios.post('https://qb-radio/poweredOff')
+            channelEl.value = ''
+        } catch (err) {
+            console.error(`Error: ${err.message}`)
+        }
     }
 
-    // Event listeners
-    submitEl.addEventListener('click', async(event) => {
-        event.preventDefault();
-        await QBRadio.JoinRadio()
-    });
-
-    disconnectEl.addEventListener('click', async(event) => {
-        event.preventDefault();
-        await QBRadio.LeaveRadio()
-    });
-
-    volumeUpEl.addEventListener('click', async(event) => {
-        event.preventDefault();
-
-        await QBRadio.VolumeUp()
-    });
-
-    volumeDownEl.addEventListener('click', async(event) => {
-        event.preventDefault();
-
-        await QBRadio.volumeDown()
-    });
-
-    increaseRadioChannelEl.addEventListener('click', async(event) => {
-        event.preventDefault();
-
-        await QBRadio.IncreaseRadioChannel()
-    });
-
-    decreaseRadioChannelEl.addEventListener('click', async(event) => {
-        event.preventDefault();
-
-        await QBRadio.DecreaseRadioChannel()
-    });
-
-    poweredOffEl.addEventListener('click', async(event) => {
-        event.preventDefault();
-
-        await QBRadio.PoweredOff()
-    });
+    document.addEventListener('click', async(ev) => {
+        ev.preventDefault()
+        const { fn: cb } = ev.target.dataset
+        switch (cb) {
+            case 'connect':
+                await QBRadio.JoinChannel()
+                break;
+            case 'disconnect':
+                await QBRadio.LeaveChannel()
+                break;
+            case 'volumeUp':
+                await QBRadio.VolumeUp()
+                break;
+            case 'volumeDown':
+                await QBRadio.VolumeDown()
+                break;
+            case 'channelUp':
+                await QBRadio.ChannelUp()
+                break;
+            case 'channelDown':
+                await QBRadio.ChannelDown()
+                break;
+            case 'powerOff':
+                await QBRadio.PowerOff()
+                break;
+            default:
+                break;
+        }
+    })
 
     window.addEventListener('message', (event) => {
         switch (event.data.type) {
             case 'open':
                 QBRadio.SlideUp()
-                maxFrequency = parseInt(event.data.maxFrequency)
                 break;
             case 'close':
                 QBRadio.SlideDown()
@@ -210,11 +197,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.onkeyup = async(data) => {
         if (data.key == "Escape") { // Escape key
+            try {
+                await axios.post('https://qb-radio/escape');
+            } catch (err) {}
+
             QBRadio.SlideDown()
-            await fetch('https://qb-radio/escape', {
-                method: "POST",
-                body: {}
-            });
         } else if (data.key == "Enter") { // Enter key
             await QBRadio.JoinRadio()
         }
